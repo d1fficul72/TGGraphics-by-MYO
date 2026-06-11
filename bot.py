@@ -2057,9 +2057,10 @@ def _load_font(font_key: str, size: int):
 def render_text_image(
     text: str, font_key: str, rows: int,
     color_rgba: tuple, add_txt_shadow: bool,
+    cols: int = WIDE_COLS,
 ) -> Image.Image:
-    """Рендерит текст на прозрачном холсте WIDE_COLS×rows ячеек (RGBA)."""
-    img_w = WIDE_COLS * STICKER_SIZE
+    """Рендерит текст на прозрачном холсте cols×rows ячеек (RGBA)."""
+    img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
     font_size = int(img_h * 0.78)
@@ -2104,9 +2105,10 @@ def render_text_image(
 
 def render_oval_base(text: str, rows: int,
                      color: tuple = (255, 255, 255, 255),
-                     font_key: str = "impact") -> Image.Image:
+                     font_key: str = "impact",
+                     cols: int = WIDE_COLS) -> Image.Image:
     """Текст + неоновая pill-рамка, прозрачный фон."""
-    img_w = WIDE_COLS * STICKER_SIZE
+    img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
     font_size = int(img_h * 0.68)
@@ -2172,9 +2174,10 @@ def make_oval_frames(base_img: Image.Image, fps: int = 20) -> tuple[list, float]
 
 def render_rect_base(text: str, rows: int,
                      color: tuple = (255, 255, 255, 255),
-                     font_key: str = "impact") -> Image.Image:
+                     font_key: str = "impact",
+                     cols: int = WIDE_COLS) -> Image.Image:
     """Текст + неоновая прямоугольная рамка, прозрачный фон."""
-    img_w = WIDE_COLS * STICKER_SIZE
+    img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
     font_size = int(img_h * 0.68)
@@ -2224,9 +2227,10 @@ def render_rect_base(text: str, rows: int,
 
 def render_glow_base(text: str, rows: int,
                      color: tuple = (255, 255, 255, 255),
-                     font_key: str = "impact") -> Image.Image:
+                     font_key: str = "impact",
+                     cols: int = WIDE_COLS) -> Image.Image:
     """Текст с неоновым свечением, прозрачный фон — без рамки."""
-    img_w = WIDE_COLS * STICKER_SIZE
+    img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
     font_size = int(img_h * 0.72)
@@ -3157,15 +3161,26 @@ async def handle_txt_pack_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         is_rect = ctx.user_data.get("txt_rect", False)
         is_glow = ctx.user_data.get("txt_glow", False)
 
-        if is_oval:
-            base_img = render_oval_base(text, rows, color_rgba, font_key)
-        elif is_rect:
-            base_img = render_rect_base(text, rows, color_rgba, font_key)
-        elif is_glow:
-            base_img = render_glow_base(text, rows, color_rgba, font_key)
+        # Подбираем количество колонок под длину текста
+        # Меньше колонок = крупнее ячейки = крупнее текст в итоге
+        text_len = len(text)
+        if text_len <= 4:
+            cols = 4
+        elif text_len <= 7:
+            cols = 6
+        elif text_len <= 12:
+            cols = 8
         else:
-            base_img = render_text_image(text, font_key, rows, color_rgba, add_sh)
-        cols = WIDE_COLS  # 12 колонок
+            cols = WIDE_COLS  # 12
+
+        if is_oval:
+            base_img = render_oval_base(text, rows, color_rgba, font_key, cols)
+        elif is_rect:
+            base_img = render_rect_base(text, rows, color_rgba, font_key, cols)
+        elif is_glow:
+            base_img = render_glow_base(text, rows, color_rgba, font_key, cols)
+        else:
+            base_img = render_text_image(text, font_key, rows, color_rgba, add_sh, cols)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             cells_dir = Path(tmpdir) / "cells"
