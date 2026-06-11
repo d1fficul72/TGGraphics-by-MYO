@@ -301,26 +301,48 @@ STK_SIZE = 512  # размер стикера (не путать с STICKER_SIZE
 
 # ── Константы: Текст → эмодзи ────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
-_FONT_DIR  = Path(os.environ.get("FONT_DIR", "/usr/share/fonts"))
+_FONTS_DIR = BASE_DIR / "fonts"   # шрифты лежат рядом с bot.py в папке fonts/
 
 def _find_font(win_name: str, linux_names: list) -> str:
+    # 1. Bundled fonts/ folder (works everywhere: Windows, Railway, etc.)
+    for name in [win_name] + linux_names:
+        p = _FONTS_DIR / name
+        if p.exists():
+            return str(p)
+    # 2. Windows system fonts
     win_path = Path("C:/Windows/Fonts") / win_name
     if win_path.exists():
         return str(win_path)
-    for name in linux_names:
-        for p in _FONT_DIR.rglob(name):
-            return str(p)
+    # 3. fc-match (fontconfig, Nix/Linux — находит шрифт по имени в nix-store)
+    try:
+        import subprocess as _sp
+        for fc_name in linux_names:
+            query = Path(fc_name).stem.replace("-", " ")
+            r = _sp.run(["fc-match", "--format=%{file}", query],
+                        capture_output=True, text=True, timeout=5)
+            p = r.stdout.strip()
+            if p and Path(p).exists():
+                return p
+    except Exception:
+        pass
+    # 4. Recursive search in common Linux paths
+    for search_dir in [Path("/usr/share/fonts"), Path("/usr/local/share/fonts")]:
+        if search_dir.exists():
+            for name in linux_names:
+                found = list(search_dir.rglob(name))
+                if found:
+                    return str(found[0])
     return ""
 
 FONT_PATHS = {
-    "impact":      _find_font("impact.ttf",    ["Impact.ttf", "impact.ttf", "LiberationSans-Bold.ttf"]),
-    "arial_black": _find_font("ariblk.ttf",    ["ArialBlack.ttf", "ariblk.ttf", "LiberationSans-Bold.ttf"]),
-    "courier":     _find_font("cour.ttf",      ["CourierNew.ttf", "cour.ttf", "LiberationMono-Regular.ttf"]),
-    "serif":       _find_font("timesbd.ttf",   ["TimesNewRoman-Bold.ttf", "timesbd.ttf", "LiberationSerif-Bold.ttf"]),
-    "shadow_3d":   _find_font("impact.ttf",    ["Impact.ttf", "impact.ttf", "LiberationSans-Bold.ttf"]),
-    "snap":        _find_font("SNAP____.TTF",  ["Snap.ttf", "snap.ttf", "LiberationSans-Bold.ttf"]),
-    "stencil":     _find_font("STENCIL.TTF",   ["Stencil.ttf", "stencil.ttf", "LiberationSans-Bold.ttf"]),
-    "outline":     _find_font("ariblk.ttf",    ["ArialBlack.ttf", "ariblk.ttf", "LiberationSans-Bold.ttf"]),
+    "impact":      _find_font("impact.ttf",    ["LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"]),
+    "arial_black": _find_font("ariblk.ttf",    ["LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"]),
+    "courier":     _find_font("cour.ttf",      ["LiberationMono-Bold.ttf", "DejaVuSansMono-Bold.ttf"]),
+    "serif":       _find_font("timesbd.ttf",   ["LiberationSerif-Bold.ttf", "DejaVuSerif-Bold.ttf"]),
+    "shadow_3d":   _find_font("impact.ttf",    ["LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"]),
+    "snap":        _find_font("SNAP____.TTF",  ["LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"]),
+    "stencil":     _find_font("STENCIL.TTF",   ["LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"]),
+    "outline":     _find_font("ariblk.ttf",    ["LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"]),
 }
 FONT_LABELS = {
     "impact":      "◼ Impact — жирный широкий",
