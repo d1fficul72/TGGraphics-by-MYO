@@ -89,8 +89,10 @@ async def global_error_handler(update: object, ctx: ContextTypes.DEFAULT_TYPE) -
             pass
 
 
-USERS_LOG   = str(Path(__file__).parent / "data" / "users_log.csv")    # полный лог действий
-USERS_STATS = str(Path(__file__).parent / "data" / "users_stats.csv")  # сводная таблица по пользователям
+_DATA_DIR   = Path(__file__).parent / "data"
+_DATA_DIR.mkdir(parents=True, exist_ok=True)   # создаём папку при старте
+USERS_LOG   = str(_DATA_DIR / "users_log.csv")
+USERS_STATS = str(_DATA_DIR / "users_stats.csv")
 
 REQUIRED_CHANNEL = "@myooffical"   # канал, на который нужна подписка
 ADMIN_USERNAME   = "d1fficul7"     # только этот пользователь получает статистику
@@ -301,7 +303,7 @@ STK_SIZE = 512  # размер стикера (не путать с STICKER_SIZE
 
 # ── Константы: Текст → эмодзи ────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
-_FONTS_DIR = BASE_DIR / "fonts"   # шрифты лежат рядом с bot.py в папке fonts/
+_FONTS_DIR = BASE_DIR / "assets" / "fonts"   # шрифты в assets/fonts/
 
 def _find_font(win_name: str, linux_names: list) -> str:
     # 1. Bundled fonts/ folder (works everywhere: Windows, Railway, etc.)
