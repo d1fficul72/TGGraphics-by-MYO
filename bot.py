@@ -2063,7 +2063,7 @@ def render_text_image(
     img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
-    font_size = int(img_h * 0.78)
+    font_size = int(img_h * 0.88)
     font      = _load_font(font_key, font_size)
 
     canvas = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
@@ -2111,7 +2111,8 @@ def render_oval_base(text: str, rows: int,
     img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
-    font_size = int(img_h * 0.68)
+    # Стартуем с большого шрифта и уменьшаем до вписывания в ширину
+    font_size = int(img_h * 0.82)
     font      = _load_font(font_key, font_size)
 
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
@@ -2180,7 +2181,7 @@ def render_rect_base(text: str, rows: int,
     img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
-    font_size = int(img_h * 0.68)
+    font_size = int(img_h * 0.82)
     font      = _load_font(font_key, font_size)
 
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
@@ -2233,7 +2234,7 @@ def render_glow_base(text: str, rows: int,
     img_w = cols * STICKER_SIZE
     img_h = rows      * STICKER_SIZE
 
-    font_size = int(img_h * 0.72)
+    font_size = int(img_h * 0.88)
     font      = _load_font(font_key, font_size)
 
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
@@ -3161,17 +3162,7 @@ async def handle_txt_pack_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         is_rect = ctx.user_data.get("txt_rect", False)
         is_glow = ctx.user_data.get("txt_glow", False)
 
-        # Подбираем количество колонок под длину текста
-        # Меньше колонок = крупнее ячейки = крупнее текст в итоге
-        text_len = len(text)
-        if text_len <= 4:
-            cols = 4
-        elif text_len <= 7:
-            cols = 6
-        elif text_len <= 12:
-            cols = 8
-        else:
-            cols = WIDE_COLS  # 12
+        cols = WIDE_COLS  # всегда 12 — так emoji крупнее в Telegram
 
         if is_oval:
             base_img = render_oval_base(text, rows, color_rgba, font_key, cols)
@@ -3450,6 +3441,7 @@ def main():
         },
         fallbacks=[
             CommandHandler("start", cmd_start),
+            CommandHandler("stats", cmd_stats),
             MessageHandler(filters.ALL, fallback_start_hint),
         ],
         allow_reentry=True,
