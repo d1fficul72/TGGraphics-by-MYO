@@ -3198,23 +3198,16 @@ async def handle_txt_pack_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             _target_w = _frame_w / 0.82
         else:
             _target_w = _text_w / 0.80
-        render_cols = max(2, min(WIDE_COLS, -(-int(_target_w) // STICKER_SIZE)))
-        cols = WIDE_COLS   # итоговых ячеек всегда 12
+        cols = max(2, min(WIDE_COLS, -(-int(_target_w) // STICKER_SIZE)))
 
         if is_oval:
-            base_img = render_oval_base(text, rows, color_rgba, font_key, render_cols)
+            base_img = render_oval_base(text, rows, color_rgba, font_key, cols)
         elif is_rect:
-            base_img = render_rect_base(text, rows, color_rgba, font_key, render_cols)
+            base_img = render_rect_base(text, rows, color_rgba, font_key, cols)
         elif is_glow:
-            base_img = render_glow_base(text, rows, color_rgba, font_key, render_cols)
+            base_img = render_glow_base(text, rows, color_rgba, font_key, cols)
         else:
-            base_img = render_text_image(text, font_key, rows, color_rgba, add_sh, render_cols)
-
-        # Растягиваем до WIDE_COLS чтобы все 12 emoji были заполнены контентом
-        target_w = WIDE_COLS * STICKER_SIZE
-        target_h = rows * STICKER_SIZE
-        if base_img.width != target_w or base_img.height != target_h:
-            base_img = base_img.resize((target_w, target_h), Image.LANCZOS)
+            base_img = render_text_image(text, font_key, rows, color_rgba, add_sh, cols)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             cells_dir = Path(tmpdir) / "cells"
