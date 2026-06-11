@@ -2,7 +2,11 @@
 nixPkgs = ["ffmpeg", "python311", "python311Packages.pip", "fontconfig"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+  "python -m venv /opt/venv",
+  "/opt/venv/bin/pip install --upgrade pip",
+  "/opt/venv/bin/pip install -r requirements.txt"
+]
 
 [start]
-cmd = "python bot.py"
+cmd = "/opt/venv/bin/python bot.py"
