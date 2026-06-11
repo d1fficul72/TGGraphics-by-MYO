@@ -3184,32 +3184,35 @@ async def handle_txt_pack_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         is_rect = ctx.user_data.get("txt_rect", False)
         is_glow = ctx.user_data.get("txt_glow", False)
 
-        # Вычисляем оптимальное число колонок по реальной ширине текста.
-        # Если текст узкий (3-4 символа) — 12 пустых emoji смотрятся хуже,
-        # чем 3-4 emoji где каждый заполнен. Берём cols так, чтобы текст
-        # занимал ~80% ширины холста.
+        # Рендерим в адаптивном размере (пропорционально тексту),
+        # потом растягиваем до WIDE_COLS — все 12 emoji заполнены контентом.
         _probe_fs   = int(rows * STICKER_SIZE * 0.88)
         _probe_font = _load_font(font_key, _probe_fs)
         _probe_draw = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
         _probe_bbox = _probe_draw.textbbox((0, 0), text, font=_probe_font)
         _text_w     = max(1, _probe_bbox[2] - _probe_bbox[0])
         if is_oval or is_rect:
-            # Учитываем отступы рамки (pad_x = 22% от высоты с каждой стороны)
             _frame_w  = _text_w + int(rows * STICKER_SIZE * 0.22) * 2
             _target_w = _frame_w / 0.82
         else:
             _target_w = _text_w / 0.80
-        # ceiling division без import math
-        cols = max(2, min(WIDE_COLS, -(-int(_target_w) // STICKER_SIZE)))
+        render_cols = max(2, min(WIDE_COLS, -(-int(_target_w) // STICKER_SIZE)))
+        cols = WIDE_COLS   # итоговых ячеек всегда 12
 
         if is_oval:
-            base_img = render_oval_base(text, rows, color_rgba, font_key, cols)
+            base_img = render_oval_base(text, rows, color_rgba, font_key, render_cols)
         elif is_rect:
-            base_img = render_rect_base(text, rows, color_rgba, font_key, cols)
+            base_img = render_rect_base(text, rows, color_rgba, font_key, render_cols)
         elif is_glow:
-            base_img = render_glow_base(text, rows, color_rgba, font_key, cols)
+            base_img = render_glow_base(text, rows, color_rgba, font_key, render_cols)
         else:
-            base_img = render_text_image(text, font_key, rows, color_rgba, add_sh, cols)
+            base_img = render_text_image(text, font_key, rows, color_rgba, add_sh, render_cols)
+
+        # Растягиваем до WIDE_COLS чтобы все 12 emoji были заполнены контентом
+        target_w = WIDE_COLS * STICKER_SIZE
+        target_h = rows * STICKER_SIZE
+        if base_img.width != target_w or base_img.height != target_h:
+            base_img = base_img.resize((target_w, target_h), Image.LANCZOS)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             cells_dir = Path(tmpdir) / "cells"
